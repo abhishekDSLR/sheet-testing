@@ -1,0 +1,33 @@
+import pandas as pd
+from googleapiclient.discovery import build
+from google.oauth2.service_account import Credentials
+
+def main(request):  # required entry point for Cloud Function
+    SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+    SERVICE_ACCOUNT_FILE = '/gcp_key.json'
+
+    credentials = Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    service = build('sheets', 'v4', credentials=credentials)
+    sheet = service.spreadsheets()
+
+    # Read from source sheet
+    source_sheet_id = "1m9VyBGGruO3Zp7O53yeD8NoVDJ7ff6sBqDYesRPz31g"
+    source_range = 'Prozo!A1:W'
+    result = sheet.values().get(spreadsheetId=source_sheet_id, range=source_range).execute()
+    values = result.get('values', [])
+
+    # Write to destination sheet
+    dest_sheet_id = "1OKivmMxlQoKC4kLfScZMTyg6VKth2uWpiwKkkNDc-7Q"
+    dest_range = "tab2!A1"
+    sheet.values().update(
+        spreadsheetId=dest_sheet_id,
+        range=dest_range,
+        valueInputOption="RAW",
+        body={"values": values}
+    ).execute()
+
+    return 'Sheet copied successfully!'
+
+if __name__ == "__main__":
+    main(request=None)
